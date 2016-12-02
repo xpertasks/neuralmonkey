@@ -21,3 +21,11 @@ def adam_optimizer(learning_rate=1e-4):
 
 def adadelta_optimizer(**kwargs):
     return tf.train.AdadeltaOptimizer(**kwargs)
+
+def configurable_type(base_type, **extra_kwargs):
+    """Create a new "type" from a given type and additional arguments."""
+    def new_type(*args, **kwargs):
+        kwargs.update(extra_kwargs)
+        return base_type(*args, **kwargs)
+
+    return new_type

@@ -136,4 +136,7 @@ class SentenceEncoder(object):
             res[self.dropout_placeholder] = 1.0
         res[self.is_training] = train
 
+        if self.attention_object is not None:
+            res.update(self.attention_object.feed_dict(dataset, train))
+
         return res

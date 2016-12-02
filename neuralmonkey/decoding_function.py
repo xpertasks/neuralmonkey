@@ -7,6 +7,7 @@ See http://arxiv.org/abs/1606.07481
 # tests: lint
 
 import tensorflow as tf
+import numpy as np
 from neuralmonkey.nn.projection import linear
 
 
@@ -104,6 +105,10 @@ class Attention(object):
         return tf.reduce_sum(
             self.v * tf.tanh(self.hidden_features + y), [2, 3]) + self.v_bias
 
+    # pylint: disable=no-self-use
+    def feed_dict(self, dataset, train=False):
+        return {}
+
 
 class CoverageAttention(Attention):
 
@@ -137,3 +142,60 @@ class CoverageAttention(Attention):
             [2, 3])
 
         return logits
+
+
+class GizaAttention(object):
+    # pylint: disable=unused-argument
+
+    def __init__(self, attention_states, scope, dropout_placeholder,
+                 input_weights=None, max_fertility=None, data_id=None):
+        self.scope = scope
+        self.input_weights = input_weights
+        self.data_id = data_id
+
+        self.attentions_in_time = []
+
+        with tf.variable_scope(scope):
+            self.attn_length = attention_states.get_shape()[1].value
+            self.attn_size = attention_states.get_shape()[2].value
+
+            # To calculate W1 * h_t we use a 1-by-1 convolution, need to reshape
+            # before.
+            self.att_states_reshaped = tf.reshape(
+                attention_states,
+                [-1, self.attn_length, 1, self.attn_size])
+
+    def attention(self, query_state):
+        with tf.variable_scope(self.scope + "/Attention"):
+            a = tf.placeholder(tf.float32, shape=[None, self.attn_length])
+            self.attentions_in_time.append(a)
+
+            # Now calculate the attention-weighted vector d.
+            # pylint: disable=invalid-name
+            d = tf.reduce_sum(tf.reshape(a, [-1, self.attn_length, 1, 1])
+                              * self.att_states_reshaped, [1, 2])
+
+            return tf.reshape(d, [-1, self.attn_size])
+
+    def feed_dict(self, dataset, train=False):
+        batch_size = len(dataset)
+        attentions_in_time = [
+            np.zeros([batch_size, self.attn_length], dtype=np.float32)
+            for _ in self.attentions_in_time]
+
+        with np.errstate(divide='ignore', invalid='ignore'):
+            if train and dataset.has_series(self.data_id):
+                for k, alignment in enumerate(dataset.get_series(self.data_id)):
+                    attentions_in_time[0][k][0] = 1
+                    for ali in alignment:
+                        # This parsing should probably get done in Dataset
+                        i, j = map(int, ali.split('-'))
+                        if i < self.attn_length - 2 and \
+                           j < len(attentions_in_time) - 1:
+                            attentions_in_time[j+1][k][i+1] = 1
+
+                for a in attentions_in_time:
+                    a /= a.sum(axis=1, keepdims=True)
+                    a[np.isnan(a)] = 0
+
+        return dict(zip(self.attentions_in_time, attentions_in_time))
