@@ -96,8 +96,8 @@ class Decoder(object):
                 "learning_step", [], initializer=tf.constant_initializer(0),
                 trainable=False)
 
-            self._create_training_placeholder_nodes()
-            self._create_input_placeholder_nodes()
+            self._create_training_placeholders()
+            self._create_input_placeholders()
             self._create_initial_state()
             self._create_embedding_matrix()
 
@@ -105,24 +105,24 @@ class Decoder(object):
             embedded_go_symbols = self._embed(self.go_symbols)
 
 
-            with tf.variable_scope("decoding_function") as df:
+            with tf.variable_scope("decoding_function") as df_scope:
                 (self.train_rnn_outputs,
                  _,
                  self.train_logits) = self._decoding_function(
-                     embedded_train_inputs, df, runtime_mode=False)
+                     embedded_train_inputs, df_scope, runtime_mode=False)
 
             assert not scope.reuse
             # Use the same variables for runtime decoding!
             scope.reuse_variables()
             assert scope.reuse
 
-            with tf.variable_scope("decoding_function") as df:
+            with tf.variable_scope("decoding_function") as df_scope:
                 # runtime methods and objects are used when no ground truth is
                 # provided (such as during testing)
                 (self.runtime_rnn_outputs,
                  self.runtime_rnn_states,
                  self.runtime_logits) = self._decoding_function(
-                     embedded_go_symbols, df, runtime_mode=True)
+                     embedded_go_symbols, df_scope, runtime_mode=True)
 
             # NOTE From this point onwards, the variables in this scope
             # REMAIN reused, so no further creation of variables is allowed
@@ -152,7 +152,6 @@ class Decoder(object):
                 tf.unpack(self.train_padding), self.vocabulary_size)
 
             self._visualize_alignments()
-            self._init_summaries()
 
         log("Decoder initialized.")
 
@@ -180,7 +179,7 @@ class Decoder(object):
         self.train_mode = tf.placeholder(
             tf.bool, shape=[], name="mode_placeholder")
 
-    def _create_training_placeholder_nodes(self):
+    def _create_training_placeholders(self):
         """Creates training placeholder nodes in the computation graph
 
         The training placeholder nodes are NOT fed during runtime.
@@ -193,12 +192,11 @@ class Decoder(object):
             tf.float32, [self.max_output_len + 1, None],
             name="decoder_padding_placeholder")
 
-    def _create_input_placeholder_nodes(self):
+    def _create_input_placeholders(self):
         """Creates runtime placeholder nodes in the computation graph"""
         self.train_mode = tf.placeholder(tf.bool, [], name="mode_placeholder")
         self.go_symbols = tf.placeholder(tf.int64, [1, None],
                                          name="go_placeholder")
-
         self.runtime_prev_word = tf.placeholder(tf.int64, [None],
                                                 "previous_word_placeholder")
 
