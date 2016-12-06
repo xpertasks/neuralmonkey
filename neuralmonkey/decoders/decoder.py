@@ -89,7 +89,6 @@ class Decoder(object):
         log("Initializing decoder, name: '{}'".format(self.name))
 
         with tf.variable_scope(name) as scope:
-
             ### Learning step
             ### TODO was here only because of scheduled sampling.
             ### needs to be refactored out
@@ -129,7 +128,6 @@ class Decoder(object):
             # REMAIN reused, so no further creation of variables is allowed
 
             # TODO instead of lists, work with time x batch tensors here
-
             self.train_logprobs = [tf.nn.log_softmax(l)
                                    for l in self.train_logits]
 
@@ -418,21 +416,6 @@ class Decoder(object):
                 collections=["summary_val_plots"],
                 max_images=256)
 
-    def _init_summaries(self):
-        """Initialize the summaries of the decoder
-
-        TensorBoard summaries are collected into the following
-        collections:
-
-        - summary_train: collects statistics from the train-time
-        """
-        # tf.scalar_summary("train_loss_with_decoded_inputs",
-        #                   self.runtime_loss,
-        #                   collections=["summary_train"])
-
-        # tf.scalar_summary("train_optimization_cost", self.train_loss,
-        #                   collections=["summary_train"])
-
     def feed_dict(self, dataset, train=False):
         """Populate the feed dictionary for the decoder object
 
@@ -469,15 +452,5 @@ class Decoder(object):
 
             fd[self.train_padding] = weights
             fd[self.train_inputs] = inputs
-
-        # else:
-        #     start_token_index = self.vocabulary.get_word_index(
-        #         START_TOKEN)
-
-        #     fd[self.train_inputs[0]] = np.repeat(start_token_index,
-        #                                          len(dataset))
-        #     fd[self.train_padding[0]] = np.ones(len(dataset))
-        #     for placeholder in self.train_padding:
-        #         fd[placeholder] = np.ones(len(dataset))
 
         return fd
