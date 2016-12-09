@@ -102,7 +102,8 @@ class Decoder(object):
             self._create_initial_state()
             self._create_embedding_matrix()
 
-            embedded_train_inputs = self._embed_and_dropout(self.train_inputs[:-1])
+            embedded_train_inputs = self._embed_and_dropout(
+                self.train_inputs[:-1])
             embedded_go_symbols = self._embed_and_dropout(self.go_symbols)
 
 
