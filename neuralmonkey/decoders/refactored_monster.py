@@ -1,6 +1,6 @@
 #tests: mypy, lint
 
-from typing import List, Callable, Optional
+from typing import List, Callable, Optional, Union
 import math
 
 import tensorflow as tf
@@ -21,7 +21,7 @@ class Decoder(object):
     used for the decoding.
     """
 
-    # pylint: disable=too-manby-arguments,too-many-locals
+    # pylint: disable=too-many-arguments,too-many-locals
     def __init__(self,
                  encoders: List[object],
                  vocabulary: Vocabulary,
