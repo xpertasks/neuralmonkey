@@ -406,7 +406,7 @@ class Decoder(object):
 
     def _visualize_attention(self):
         """Create image summaries with attentions"""
-        att_objects = self._collect_attention_objects()
+        att_objects = self._collect_attention_objects(runtime_mode=True)
 
         for i, a in enumerate(att_objects):
             alignments = tf.expand_dims(tf.transpose(
