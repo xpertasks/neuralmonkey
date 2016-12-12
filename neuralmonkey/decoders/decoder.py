@@ -336,7 +336,7 @@ class Decoder(object):
         """
         return linear(self._dropout(rnn_output), self.vocabulary_size)
 
-    def decoding_step(self, current_input, state, scope):
+    def decoding_step(self, current_input, state, scope, runtime_mode):
         """Perform one step of the decoder RNN
 
         Arguments:
@@ -375,7 +375,7 @@ class Decoder(object):
 
         assert runtime_mode == scope.reuse
         logit, output, state = self.decoding_step(
-            inputs[0], self.initial_state, scope)
+            inputs[0], self.initial_state, scope, runtime_mode)
 
         output_logits = [logit]
         rnn_outputs = [output]
@@ -396,7 +396,7 @@ class Decoder(object):
                 current_input = inputs[step]
 
             logit, output, state = self.decoding_step(current_input, state,
-                                                      scope)
+                                                      scope, runtime_mode)
 
             output_logits.append(logit)
             rnn_outputs.append(output)
