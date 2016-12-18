@@ -1,4 +1,4 @@
-#tests: lint
+# tests: lint
 
 from typing import List, Callable, Optional, Union, Tuple
 import math
@@ -13,6 +13,7 @@ from neuralmonkey.nn.utils import dropout
 from neuralmonkey.nn.projection import linear
 from neuralmonkey.decoders.encoder_projection import (
     linear_encoder_projection, concat_encoder_projection, empty_initial_state)
+
 
 # pylint: disable=too-many-instance-attributes,too-few-public-methods
 # Big decoder cannot be simpler. Not sure if refactoring
@@ -151,7 +152,6 @@ class Decoder(object):
 
             return decoded, logits
 
-
         _, self.train_logits = decode(train_rnn_outputs)
 
         train_targets = tf.unpack(self.train_inputs)
@@ -183,8 +183,6 @@ class Decoder(object):
                           collections=["summary_train"])
 
         log("Decoder initalized.")
-
-
 
     def _create_input_placeholders(self) -> None:
         """Creates input placeholder nodes in the computation graph"""
@@ -254,11 +252,9 @@ class Decoder(object):
         embedded = tf.nn.embedding_lookup(self.embedding_matrix, inputs)
         return dropout(embedded, self.dropout_keep_prob, self.train_mode)
 
-
     def _logit_function(self, state: tf.Tensor) -> tf.Tensor:
         state = dropout(state, self.dropout_keep_prob, self.train_mode)
         return tf.matmul(state, self.decoding_w) + self.decoding_b
-
 
     def _get_rnn_cell(self) -> tf.nn.rnn_cell.RNNCell:
         return tf.nn.rnn_cell.GRUCell(self.rnn_size)
@@ -299,7 +295,6 @@ class Decoder(object):
                 if i > 0:
                     tf.get_variable_scope().reuse_variables()
 
-
                 if train_mode:
                     inp = train_inputs[i - 1]
                 else:
@@ -335,7 +330,6 @@ class Decoder(object):
                 outputs.append(output)
 
         return outputs, states
-
 
     def feed_dict(self, dataset, train=False):
         """Populate the feed dictionary for the decoder object
