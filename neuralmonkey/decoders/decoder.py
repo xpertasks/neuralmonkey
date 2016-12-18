@@ -84,8 +84,8 @@ class Decoder(object):
 
             if "rnn_size" in kwargs:
                 log("Warning: rnn_size attribute will not be used without "
-                    "encoder projection! Using the sum of encoder hidden state "
-                    "sizes, which is {}".format(self.rnn_size), color="red")
+                    "encoder projection! Using the sum of encoder hidden state"
+                    " sizes, which is {}".format(self.rnn_size), color="red")
 
         log("Initializing decoder, name: '{}'".format(self.name))
 
@@ -176,11 +176,6 @@ class Decoder(object):
         # the array is of tuples ([values], [indices])
         return [tf.nn.top_k(p, k_best) for p in self.runtime_logprobs]
 
-    def _create_placeholder_nodes(self):
-        """Creates placeholder nodes in the computation graph"""
-        self.train_mode = tf.placeholder(
-            tf.bool, shape=[], name="mode_placeholder")
-
     def _create_training_placeholders(self):
         """Creates training placeholder nodes in the computation graph
 
@@ -238,8 +233,8 @@ class Decoder(object):
         return tf.tanh(tf.matmul(dropped_input, weights) + biases)
 
     def _create_initial_state(self):
-        """Construct the part of the computation graph that computes the initial
-        state of the decoder."""
+        """Construct the part of the computation graph that computes the
+        initial state of the decoder."""
         if len(self.encoders) == 0:
             self.initial_state = tf.zeros([self.rnn_size])
         else:
