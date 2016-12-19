@@ -13,6 +13,7 @@ from neuralmonkey.nn.utils import dropout
 from neuralmonkey.nn.projection import linear
 from neuralmonkey.decoders.encoder_projection import (
     linear_encoder_projection, concat_encoder_projection, empty_initial_state)
+from neuralmonkey.decoders.output_projection import no_deep_output
 
 
 # pylint: disable=too-many-instance-attributes,too-few-public-methods
@@ -103,6 +104,10 @@ class Decoder(object):
                 log("Using linear projection of encoders as the initial state")
                 self.encoder_projection = linear_encoder_projection(
                     self.dropout_keep_prob)
+
+        if self.output_projection is None:
+            log("No output projection specified - using simple concatenation")
+            self.output_projection = no_deep_output
 
         with tf.variable_scope(name):
             self._create_input_placeholders()
