@@ -6,6 +6,7 @@ from neuralmonkey.readers.plain_text_reader import get_plain_text_reader
 
 # tests: lint,mypy
 
+
 # pylint: disable=invalid-name
 def AlignmentReader(source_len, target_len, dtype=np.float32,
                     normalize=True, one_array=False):

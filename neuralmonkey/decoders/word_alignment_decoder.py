@@ -3,6 +3,7 @@ import tensorflow as tf
 
 # tests: mypy
 
+
 class WordAlignmentDecoder(object):
     """
     A decoder that computes soft alignment from an attentive encoder. Loss is
@@ -15,30 +16,36 @@ class WordAlignmentDecoder(object):
         self.data_id = data_id
         self.name = name
 
-        self.ref_alignment = tf.placeholder(tf.float32, [None, None, None],
-                                            name="ref_alignment")
+        self.ref_alignment = tf.placeholder(
+            tf.float32,
+            [None, self.decoder.max_output_len, self.encoder.max_input_len],
+            name="ref_alignment")
+
+        # shape will be [max_output_len, batch_size, max_input_len]
+        self.alignment_target = tf.transpose(self.ref_alignment,
+                                             perm=[1, 0, 2])
 
         _, self.train_loss = self._make_decoder(runtime_mode=False)
         self.decoded, self.runtime_loss = self._make_decoder(runtime_mode=True)
-
 
     def _make_decoder(self, runtime_mode=False):
         attn_obj = self.decoder.get_attention_object(self.encoder,
                                                      runtime_mode,
                                                      create=False)
 
-        alignment_logits = tf.transpose(tf.pack(attn_obj.logits_in_time),
-                                        perm=[1, 0, 2])
-        # alignment_logits = alignment_logits[:, :-1]  # last output is </s>
-
+        alignment_logits = tf.pack(attn_obj.logits_in_time)
 
         if runtime_mode:
-            alignment = tf.nn.softmax(alignment_logits)
-            loss = 0
+            # make batch_size the first dimension
+            alignment = tf.transpose(tf.nn.softmax(alignment_logits),
+                                     perm=[1, 0, 2])
+            loss = tf.constant(0)
         else:
             alignment = None
-            loss = tf.nn.softmax_cross_entropy_with_logits(alignment_logits,
-                                                           self.ref_alignment)
+
+            xent = tf.nn.softmax_cross_entropy_with_logits(
+                alignment_logits, self.alignment_target)
+            loss = tf.reduce_sum(xent * self.decoder.train_padding)
 
         return alignment, loss
 
@@ -48,8 +55,6 @@ class WordAlignmentDecoder(object):
 
     # pylint: disable=unused-argument
     def feed_dict(self, dataset, train=False):
-        # pylint: disable=invalid-name
-        # fd is the common name for feed dictionary
         fd = {}
 
         alignment = dataset.get_series(self.data_id, allow_none=True)
