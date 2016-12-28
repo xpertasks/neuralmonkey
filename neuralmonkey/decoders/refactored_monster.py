@@ -272,7 +272,7 @@ class Decoder(object):
         key = (encoder, train_mode)
         if key not in self._attention_object_map and create:
             self._attention_object_map[key] = encoder.get_attention_object(
-                    runtime=not train_mode)
+                runtime=not train_mode)
 
         return self._attention_object_map[key]
 
