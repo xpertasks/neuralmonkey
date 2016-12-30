@@ -190,6 +190,8 @@ class Decoder(object):
         tf.scalar_summary('train_optimization_cost', self.cost,
                           collections=["summary_train"])
 
+        self._visualize_attention()
+
         log("Decoder initalized.")
 
     def _create_input_placeholders(self) -> None:
@@ -268,7 +270,7 @@ class Decoder(object):
         return tf.nn.rnn_cell.GRUCell(self.rnn_size)
 
     def get_attention_object(self, encoder, train_mode: bool,
-                             create: bool=True):
+                             create: bool=False):
         key = (encoder, train_mode)
         if key not in self._attention_object_map and create:
             self._attention_object_map[key] = encoder.get_attention_object(
@@ -296,7 +298,8 @@ class Decoder(object):
         """
         cell = self._get_rnn_cell()
         if self.use_attention:
-            att_objects = [self.get_attention_object(e, train_mode)
+            att_objects = [self.get_attention_object(e, train_mode,
+                                                     create=True)
                            for e in self.encoders
                            if isinstance(e, Attentive)]
 
@@ -347,6 +350,21 @@ class Decoder(object):
                 outputs.append(output)
 
         return outputs, states
+
+    def _visualize_attention(self, train_mode=False):
+        """Create image summaries with attentions"""
+        att_objects = [self.get_attention_object(e, train_mode)
+                       for e in self.encoders
+                       if isinstance(e, Attentive)]
+
+        for i, a in enumerate(att_objects):
+            alignments = tf.expand_dims(tf.transpose(
+                tf.pack(a.attentions_in_time), perm=[1, 2, 0]), -1)
+
+            tf.image_summary(
+                "attention_{}".format(i), alignments,
+                collections=["summary_val_plots"],
+                max_images=256)
 
     def feed_dict(self, dataset, train=False):
         """Populate the feed dictionary for the decoder object
