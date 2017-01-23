@@ -30,7 +30,6 @@ visible to other computers in the network, set the host to 0.0.0.0)
 Then you can navigate in your browser to `http://localhost:<port>` to view the
 experiment logs.
 
-
 TensorBoard
 -----------
 
